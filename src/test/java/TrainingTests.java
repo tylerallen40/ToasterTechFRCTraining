@@ -7,8 +7,7 @@ import static org.mockito.Mockito.when;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
-import frc.robot.JoystickButtonExample;
-import frc.robot.SimpleMotorExample;
+import frc.robot.RobotToggle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,8 +25,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @PrepareForTest({
   PWMTalonSRX.class, 
-  JoystickButtonExample.class, 
-  SimpleMotorExample.class, 
+  RobotToggle.class, 
   Joystick.class
 })
 @RunWith(PowerMockRunner.class)
@@ -55,34 +53,79 @@ public class TrainingTests {
                 .withArguments(0)
                 .thenReturn(joystick);
     when(joystick.getRawButton(0)).thenReturn(false);
+    when(joystick.getRawAxis(1)).thenReturn(0.0);
+    when(joystick.getRawAxis(3)).thenReturn(0.0);
   }
+
+  @Test
+  public void testJoystickValues() throws Exception {
+    RobotToggle robot = new RobotToggle();
+    robot.robotInit();
+    for(int i=-100; i<=100; i++) {
+      when(joystick.getRawAxis(1)).thenReturn(i*.01);
+      when(joystick.getRawAxis(3)).thenReturn(i*.01);  
+      robot.teleopPeriodic();
+      Mockito.verify(motorLeft, times(1)).set(i*.01);
+      Mockito.verify(motorRight, times(1)).set(i*.01);  
+    }
+    robot.close();
+  }
+
+  public void testToggle() throws Exception {
+    RobotToggle robot = new RobotToggle();
+    robot.robotInit();
+    when(joystick.getRawAxis(1)).thenReturn(1.0);
+    when(joystick.getRawAxis(3)).thenReturn(1.0);
+    
+    // Run normally
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(1)).set(1.0);
+    Mockito.verify(motorRight, times(1)).set(1.0);  
+
+    // Press button
+    when(joystick.getRawButton(0)).thenReturn(true);
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(1)).set(-1.0);
+    Mockito.verify(motorRight, times(1)).set(-1.0);  
+
+    // Hold Button
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(2)).set(-1.0);
+    Mockito.verify(motorRight, times(2)).set(-1.0);  
+
+    // Release Button
+    when(joystick.getRawButton(0)).thenReturn(false);
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(3)).set(-1.0);
+    Mockito.verify(motorRight, times(3)).set(-1.0);
+
+    // Keep Button Released 
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(4)).set(-1.0);
+    Mockito.verify(motorRight, times(4)).set(-1.0);
+
+    // Press button again 
+    when(joystick.getRawButton(0)).thenReturn(true);
+    robot.teleopPeriodic();
+    Mockito.verify(motorLeft, times(2)).set(1.0);
+    Mockito.verify(motorRight, times(2)).set(1.0);  
+    robot.close();
+  }
+
+
 
   @Test
   public void testJoystickExample() throws Exception {
-    System.out.println("test");
-    JoystickButtonExample robot = new JoystickButtonExample();
-    robot.robotInit();
-    robot.teleopPeriodic();
-    Mockito.verify(motorLeft, times(1)).set(0.0);
-    Mockito.verify(motorRight, times(1)).set(0.0);
-    when(joystick.getRawButton(0)).thenReturn(true);
-    robot.teleopPeriodic();
-    Mockito.verify(motorLeft, times(1)).set(1.0);
-    Mockito.verify(motorRight, times(1)).set(1.0);
-    // Mockito.verify(motorRight, never()).set(Mockito.anyDouble());
-    robot.close();
+    // RobotToggle robot = new RobotToggle();
+    // robot.robotInit();
+    // robot.teleopPeriodic();
+    // Mockito.verify(motorLeft, times(1)).set(0.0);
+    // Mockito.verify(motorRight, times(1)).set(0.0);
+    // when(joystick.getRawButton(0)).thenReturn(true);
+    // robot.teleopPeriodic();
+    // Mockito.verify(motorLeft, times(1)).set(1.0);
+    // Mockito.verify(motorRight, times(1)).set(1.0);
+    // // Mockito.verify(motorRight, never()).set(Mockito.anyDouble());
+    // robot.close();
   }
-
-
-  @Test
-  public void testSimpleMotorExample() throws Exception {
-    SimpleMotorExample robot = new SimpleMotorExample();
-    robot.robotInit();
-    robot.autonomousPeriodic();
-    Mockito.verify(motorLeft, times(1)).set(1.0);
-    Mockito.verify(motorRight, times(1)).set(1.0);
-    // Mockito.verify(motorRight, never()).set(Mockito.anyDouble());
-    robot.close();
-  }
-
 }

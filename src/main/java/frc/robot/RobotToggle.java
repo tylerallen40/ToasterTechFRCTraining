@@ -18,19 +18,31 @@ import edu.wpi.first.wpilibj.TimedRobot;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class SimpleMotorExample extends TimedRobot {
+public class RobotToggle extends TimedRobot {
   /**
    * motorLeft should be motor port 0
    * motorRight should be motor port 1
+   * joystick should be joystick port 0
    */
   private PWMTalonSRX motorLeft;
   private PWMTalonSRX motorRight;
+  private Joystick joystick;
 
   /**
-   * In this example we will in teleop, make the motors run full forward in autonomous mode
+   * In this example we will make the motors be driven by joysticks. Pushing button 0
+   * will reverse the joystick direction.
+   * 
+   * Joystick axis 1 will control the left side of the robot.
+   * Joystick axis 3 will control the left side of the robot.
+   * 
+   * Use joystick.getRawButton() to get joystick button values.
+   * Use joystick.getRawAxis() to get the joystick values
    */
   @Override
   public void robotInit() {
+    motorLeft = new PWMTalonSRX(0);
+    motorRight = new PWMTalonSRX(1);
+    joystick = new Joystick(0);
   }
 
   @Override
